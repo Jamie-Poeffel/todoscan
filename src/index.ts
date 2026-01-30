@@ -1,7 +1,8 @@
+#!/usr/bin/env node
 import chalk from 'chalk';
 import prompts from 'prompts';
-import { addTask } from './tasks.ts';
-import { findTodos } from './findTodos.ts';
+import { addTask } from './tasks';
+import { findTodos } from './findTodos';
 
 const asciiArt = `
  ________               __                 

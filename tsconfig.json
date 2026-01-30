@@ -18,7 +18,7 @@
     "declaration": true,
     "declarationMap": true,
     "isolatedModules": true,
-    "allowImportingTsExtensions": true,
+    "allowImportingTsExtensions": false,
     "noEmit": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
