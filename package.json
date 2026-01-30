@@ -4,6 +4,9 @@
   "description": "Scan TODO comments in your code and push them to Todoist",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "repository": {
+    "url": "https://github.com/Jamie-Poeffel/todoscan"
+  },
   "bin": {
     "todoscan": "./dist/index.js"
   },
