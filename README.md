@@ -22,14 +22,14 @@ Stop forgetting TODOs buried in your code. Turn them into real, actionable tasks
 
 ### Run with npx (recommended)
 ```bash
-npx todo
+npx todoscan
 ```
 
 
 ### or install globaly
 ```bash
-npm install -g todo
+npm install -g todoscan
 ```
 ### Run
 ```bash
-todo
+todoscan
