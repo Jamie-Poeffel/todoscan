@@ -1,11 +1,11 @@
 {
-  "name": "todocli",
-  "version": "0.1.0",
+  "name": "todoscan",
+  "version": "0.1.3",
   "description": "Scan TODO comments in your code and push them to Todoist",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "todo": "./dist/index.js"
+    "todoscan": "./dist/index.js"
   },
   "scripts": {
     "test": "jest",
