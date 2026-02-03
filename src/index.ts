@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 import chalk from 'chalk';
 import prompts from 'prompts';
-import { addTask, getTasks } from './tasks';
+import { addTask, completeTask, getTasks } from './tasks';
 import { findTodos } from './findTodos';
 import { SaveVars } from './saveVars';
 import { ProjectConfig } from './projectConfig';
-import { TodoistApi } from '@doist/todoist-api-typescript';
+import { berryRed, TodoistApi } from '@doist/todoist-api-typescript';
+import { connectToGitlab } from './connectToGit';
 
 const asciiArt = `
  ________               __                 
@@ -20,10 +21,15 @@ $$$$$$$$/______    ____$$ |  ______
                                                                               
 `;
 
-console.clear();
-console.log(chalk.blue(asciiArt));
+export function refreshView() {
+    console.clear();
+    console.log(chalk.blue(asciiArt));
+}
+
+refreshView();
 
 async function mainMenu() {
+
     const env = await SaveVars.getInstance();
     const projectConfig = new ProjectConfig(process.cwd());
 
@@ -40,17 +46,27 @@ async function mainMenu() {
     }
 
     const choices = [
-        { title: 'Scan Todos', value: '1' },
-        { title: 'List Todos', value: '2' },
+        { title: 'Scan Todos', value: 'scan_todos' },
+        { title: 'List Todos', value: 'list_todos' },
     ];
 
     if (projectConfig.projectId) {
         choices.push({ title: 'Change Project', value: 'change_project' });
     }
 
+    if (!env.IS_GIT_INIT) {
+        choices.push({ title: "Connect a Git", value: "connect_to_git" });
+    } else {
+        if (env.API_TOKEN_GITLAB != "") {
+            choices.push({ title: "Use GitLab", value: "gitlab" });
+        } else {
+            choices.push({ title: "Use GitHub", value: "github" });
+        }
+    }
+
     choices.push(
-        { title: 'Clear', value: '3' },
-        { title: 'Exit', value: '4' }
+        { title: 'Clear', value: 'clear_terminal' },
+        { title: 'Exit', value: 'exit_app' }
     );
 
     const option = await prompts({
@@ -76,61 +92,139 @@ async function mainMenu() {
 
 
     switch (option.choice) {
-        case '1': {
-
-            const todos = await findTodos();
-
-            todos.forEach(todo => {
-                console.log(`( ) ${todo.text}`);
-            });
-
-            const option = await prompts({
-                type: 'select',
-                name: 'addToTaskist',
-                message: 'Want to add these to Taskist? ',
-                choices: [
-                    { title: 'True', value: true },
-                    { title: 'False', value: false },
-                ],
-                instructions: false
-            })
-
-            if (option.addToTaskist) {
-                for (const todo of todos) {
-                    await addTask(projectConfig.projectId, todo.text, [todo.type])
-                }
-
-            }
-
+        case 'scan_todos': {
+            await scanTodos(projectConfig);
+            break;
+        }
+        case 'connect_to_git': {
+            await connectToGit();
+            break;
+        }
+        case 'list_todos': {
+            await listTodos(projectConfig);
             break;
         }
 
-        case '2': {
-
-
-            const todos = await getTasks(projectConfig.projectId);
-
-            todos.forEach((todo: any) => {
-                console.log(`( ) ${todo.content}`);
-            });
-            console.log('\n\n')
-
+        case 'clear_terminal': {
+            await clearTerminal();
             break;
         }
 
-        case '3': {
-            console.clear();
-            console.log(chalk.blue(asciiArt));
-            await mainMenu();
-            break;
+        case 'exit_app': {
+            exitApp();
         }
 
-        case '4':
-            console.log(chalk.yellow('Goodbye!'));
-            process.exit(0);
     }
 
     await mainMenu();
 }
 
 mainMenu();
+
+async function scanTodos(projectConfig: ProjectConfig) {
+    const todos = await findTodos();
+
+    const choices = [
+        { title: 'Select All', value: 'select_all' },
+        ...todos.map((todo, index) => ({
+            title: todo.text,
+            value: index
+        }))
+    ];
+
+    const selection = await prompts({
+        type: 'multiselect',
+        name: 'selected',
+        message: 'Select todos to add to Taskist (Space to select, Enter to confirm):',
+        choices: choices,
+        instructions: false
+    });
+
+    let selectedTodos: typeof todos;
+
+    if (selection.selected.includes('select_all')) {
+        selectedTodos = todos;
+    } else {
+        selectedTodos = selection.selected.map((index: number) => todos[index]);
+    }
+
+    if (selectedTodos.length > 0) {
+        for (const todo of selectedTodos) {
+            await addTask(projectConfig.projectId, todo.text, [todo.type]);
+        }
+        console.log(`${chalk.green('√')} Added ${selectedTodos.length} task(s) to Taskist`);
+    }
+}
+
+async function connectToGit() {
+    const git_option = await prompts({
+        type: 'select',
+        name: 'choice',
+        message: 'Select Options (use arrowkeys to change, enter to confirm)',
+        choices: [
+            { title: "Gitlab", value: 'gitlab' },
+            { title: "Github", value: 'github' }
+        ],
+        hint: '- Arrow keys to change. Return to submit',
+        instructions: false
+    });
+
+    refreshView();
+
+    switch (git_option.choice) {
+        case 'gitlab': {
+            await connectToGitlab();
+            break;
+        }
+        case 'github': {
+            break;
+        }
+    }
+
+
+    refreshView();
+}
+
+async function listTodos(projectConfig: ProjectConfig) {
+    const todos = await getTasks(projectConfig.projectId);
+
+
+    if (!todos || todos.length === 0) {
+        console.log(chalk.red('×') + ' No tasks found');
+        return;
+    }
+
+    console.log(`${chalk.blue('!')} You have ${todos.length} task(s) to do`);
+
+
+    const choices = todos.map((todo: any) => ({
+        title: todo.content,
+        value: todo.id
+    }));
+
+
+    const result = await prompts({
+        type: 'multiselect',
+        name: 'value',
+        message: 'Select tasks to complete (Space to select, Enter to confirm):',
+        choices: choices,
+        hint: '- Arrow keys to change. Return to complete',
+        instructions: false
+    });
+
+    for (const taskId of result.value) {
+        await completeTask(taskId);
+    }
+
+    console.log(`${chalk.green('√')} You have completed ${result.value.length} task(s)`);
+}
+
+async function clearTerminal() {
+    refreshView();
+    await mainMenu();
+}
+
+function exitApp() {
+    console.log(chalk.yellow('Goodbye!'));
+    process.exit(0);
+}
