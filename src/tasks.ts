@@ -36,6 +36,18 @@ export async function getTasks(projectId: string) {
     }
 }
 
+export async function completeTask(taskId: string) {
+    const api = await getApi();
+
+    try {
+        const completedResult: any = await api.closeTask(taskId)
+        return completedResult;
+    } catch (error) {
+        console.error('Error completing task: ', error);
+        throw error;
+    }
+}
+
 /**
  * Add a task to a project
  */
@@ -49,7 +61,6 @@ export async function addTask(
     try {
         const task = await api.addTask({ projectId, content, labels });
         if (debug) console.log('Task added:', task.content, 'Labels:', task.labels);
-        console.log(chalk.green('√') + ' Task added successfully');
         return task;
     } catch (error) {
         console.error('Error adding task:', error);

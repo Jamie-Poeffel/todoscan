@@ -4,6 +4,9 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@types/*": [
+        "./types/*"
       ]
     },
     "module": "nodenext",
