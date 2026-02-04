@@ -5,8 +5,10 @@ import { addTask, completeTask, getTasks } from './tasks';
 import { findTodos } from './findTodos';
 import { SaveVars } from './saveVars';
 import { ProjectConfig } from './projectConfig';
-import { berryRed, TodoistApi } from '@doist/todoist-api-typescript';
+import { TodoistApi } from '@doist/todoist-api-typescript';
 import { connectToGithub, connectToGitlab } from './git';
+import { IGitProvider } from '@/types/gitprovider';
+import { Github, Gitlab } from './providers/gitproviders';
 
 const asciiArt = `
  ________               __                 
@@ -26,15 +28,26 @@ export function refreshView() {
     console.log(chalk.blue(asciiArt));
 }
 
+let PROVIDER: IGitProvider | null = null
 refreshView();
 
 async function mainMenu() {
+    const vars = await SaveVars.getInstance();
 
-    const env = await SaveVars.getInstance();
+    const apiGithubToken = await vars.load("api-token-github", false)
+    const apiGitlabToken = await vars.load("api-token-gitlab", false)
+
+    if (apiGithubToken != "") {
+        PROVIDER = new Github();
+    } else if (apiGitlabToken != "") {
+        PROVIDER = new Gitlab()
+    } else {
+        vars.resetState();
+    }
     const projectConfig = new ProjectConfig(process.cwd());
 
     if (!projectConfig.projectId) {
-        const api = new TodoistApi(env.API_TOKEN_TASKIST);
+        const api = new TodoistApi(vars.API_TOKEN_TASKIST);
         const projects = await api.getProjects();
 
         const message = "Select your project for this repo: "
@@ -51,12 +64,13 @@ async function mainMenu() {
         choices.push({ title: 'Change Project', value: 'change_project' });
     }
 
-    if (!env.IS_GIT_INIT) {
+    const isGitInit = await vars.load('git-init', false);
+    if (!isGitInit) {
         choices.push({ title: "Connect a Git", value: "connect_to_git" });
     } else {
-        if (env.API_TOKEN_GITLAB != "") {
+        if (apiGitlabToken != "") {
             choices.push({ title: "Use GitLab", value: "gitlab" });
-        } else if (env.API_TOKEN_GITHUB != "") {
+        } else if (apiGithubToken != "") {
             choices.push({ title: "Use GitHub", value: "github" });
         }
     }
@@ -70,7 +84,7 @@ async function mainMenu() {
     const option = await selectMenu(choices);
 
     if (option.choice === 'change_project') {
-        const api = new TodoistApi(env.API_TOKEN_TASKIST);
+        const api = new TodoistApi(vars.API_TOKEN_TASKIST);
         const projects = await api.getProjects();
         const message = "Select your project for this repo: "
         const option = await selectMenu(projects.results.map(p => ({ title: p.name, value: p.id })), message)
@@ -91,26 +105,21 @@ async function mainMenu() {
             await listTodos(projectConfig);
             break;
         }
-
         case 'github': {
             await githubMenu();
             break;
         }
-
         case 'gitlab': {
             await gitlabMenu();
             break;
         }
-
         case 'change_settings': {
             break;
         }
-
         case 'clear_terminal': {
             await clearTerminal();
             break;
         }
-
         case 'exit_app': {
             exitApp();
         }
@@ -124,7 +133,7 @@ mainMenu();
 
 
 
-
+/*---------------------Functions---------------------*/
 
 async function scanTodos(projectConfig: ProjectConfig) {
     const todos = await findTodos();
@@ -181,7 +190,6 @@ async function connectToGit() {
         }
     }
 
-
     refreshView();
 }
 
@@ -196,12 +204,10 @@ async function listTodos(projectConfig: ProjectConfig) {
 
     console.log(`${chalk.blue('!')} You have ${todos.length} task(s) to do`);
 
-
     const choices = todos.map((todo: any) => ({
         title: todo.content,
         value: todo.id
     }));
-
 
     const result = await prompts({
         type: 'multiselect',
@@ -244,6 +250,7 @@ async function selectMenu(choices: Array<{ title: string, value: string }>, mess
 
 async function githubMenu() {
     const choices = [
+        { title: 'List Issues', value: 'list_issues' },
         { title: 'Change provider', value: 'change_provider' },
         { title: 'back', value: 'back' },
     ];
@@ -255,7 +262,6 @@ async function githubMenu() {
 
 async function gitlabMenu() {
     const choices = [
-
         { title: 'Change provider', value: 'change_provider' },
         { title: 'back', value: 'back' },
     ];
@@ -267,6 +273,10 @@ async function gitlabMenu() {
 
 async function gitMenuParsing(option: prompts.Answers<"choice">) {
     switch (option.choice) {
+        case 'list_issues': {
+            await gitListIssues();
+            break;
+        }
         case 'change_provider': {
             await changeProvider();
             await connectToGit();
@@ -286,4 +296,12 @@ async function changeProvider() {
 
     vars.setGithubToken("");
     vars.setGitlabToken("");
-} 
+}
+
+async function gitListIssues() {
+    const issues = await PROVIDER?.getIssues();
+
+    for (const issue of issues) {
+        console.log(issue.title)
+    }
+}

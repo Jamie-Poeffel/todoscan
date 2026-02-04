@@ -48,18 +48,26 @@ export class SaveVars {
     private setIS_GIT_INIT(value: boolean) {
         this.IS_GIT_INIT = value
         this.secrets["git-init"] = String(value)
+        this.saveFile();
     }
 
     public setGitlabToken(value: string) {
         this.setIS_GIT_INIT(true);
         this.API_TOKEN_GITLAB = value
         this.secrets["api-token-gitlab"] = value
+        this.saveFile();
     }
 
     public setGithubToken(value: string) {
         this.setIS_GIT_INIT(true);
         this.API_TOKEN_GITHUB = value
         this.secrets["api-token-github"] = value
+        this.saveFile();
+    }
+
+    public resetState() {
+        this.setIS_GIT_INIT(false);
+        this.saveFile();
     }
 
     private loadFile() {
