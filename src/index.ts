@@ -132,7 +132,6 @@ async function mainMenu() {
 mainMenu();
 
 
-
 /*---------------------Functions---------------------*/
 
 async function scanTodos(projectConfig: ProjectConfig) {
