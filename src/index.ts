@@ -10,6 +10,7 @@ import { connectToGithub, connectToGitlab } from './git';
 import { IGitProvider } from '@/types/gitprovider';
 import { Github, Gitlab } from './providers/gitproviders';
 
+let PROVIDER: IGitProvider | null = null
 const asciiArt = `
  ________               __                 
 /        |             /  |                
@@ -28,7 +29,6 @@ export function refreshView() {
     console.log(chalk.blue(asciiArt));
 }
 
-let PROVIDER: IGitProvider | null = null
 refreshView();
 
 async function mainMenu() {
