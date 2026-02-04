@@ -5,7 +5,7 @@
 ![npm](https://img.shields.io/npm/d18m/todoscan)
 
 
-A simple CLI tool that scans your codebase for TODO-style comments and optionally adds them as tasks to **Todoist**.
+A simple CLI tool that scans your codebase for TODO-style comments and optionally adds them as tasks to **Todolist**.
 
 Stop forgetting TODOs buried in your code. Turn them into real, actionable tasks.
 
