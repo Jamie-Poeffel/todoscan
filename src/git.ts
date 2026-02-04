@@ -17,7 +17,6 @@ export async function connectToGithub() {
 }
 
 async function getToken(provider: IGitProvider) {
-    const vars = await SaveVars.getInstance();
     provider.printTokenMessage();
 
     const response = await provider.prompt();
@@ -26,5 +25,5 @@ async function getToken(provider: IGitProvider) {
         return;
     }
 
-    vars.setGitlabToken(response.value);
+    provider.setVarToken(response.value);
 }
