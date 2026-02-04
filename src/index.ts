@@ -6,7 +6,7 @@ import { findTodos } from './findTodos';
 import { SaveVars } from './saveVars';
 import { ProjectConfig } from './projectConfig';
 import { berryRed, TodoistApi } from '@doist/todoist-api-typescript';
-import { connectToGitlab } from './git';
+import { connectToGithub, connectToGitlab } from './git';
 
 const asciiArt = `
  ________               __                 
@@ -36,13 +36,10 @@ async function mainMenu() {
     if (!projectConfig.projectId) {
         const api = new TodoistApi(env.API_TOKEN_TASKIST);
         const projects = await api.getProjects();
-        const choice = await prompts({
-            type: 'select',
-            name: 'value',
-            message: 'Select your project for this repo:',
-            choices: projects.results.map(p => ({ title: p.name, value: p.id }))
-        });
-        projectConfig.save(choice.value);
+
+        const message = "Select your project for this repo: "
+        const option = await selectMenu(projects.results.map(p => ({ title: p.name, value: p.id })), message)
+        projectConfig.save(option.choice);
     }
 
     const choices = [
@@ -59,35 +56,25 @@ async function mainMenu() {
     } else {
         if (env.API_TOKEN_GITLAB != "") {
             choices.push({ title: "Use GitLab", value: "gitlab" });
-        } else {
+        } else if (env.API_TOKEN_GITHUB != "") {
             choices.push({ title: "Use GitHub", value: "github" });
         }
     }
 
     choices.push(
+        { title: 'Settings', value: 'change_settings' },
         { title: 'Clear', value: 'clear_terminal' },
         { title: 'Exit', value: 'exit_app' }
     );
 
-    const option = await prompts({
-        type: 'select',
-        name: 'choice',
-        message: 'Select Options (use arrowkeys to change, enter to confirm)',
-        choices,
-        hint: '- Arrow keys to change. Return to submit',
-        instructions: false
-    });
+    const option = await selectMenu(choices);
 
     if (option.choice === 'change_project') {
         const api = new TodoistApi(env.API_TOKEN_TASKIST);
         const projects = await api.getProjects();
-        const choice = await prompts({
-            type: 'select',
-            name: 'value',
-            message: 'Select your project for this repo:',
-            choices: projects.results.map(p => ({ title: p.name, value: p.id }))
-        });
-        projectConfig.save(choice.value);
+        const message = "Select your project for this repo: "
+        const option = await selectMenu(projects.results.map(p => ({ title: p.name, value: p.id })), message)
+        projectConfig.save(option.choice);
     }
 
 
@@ -102,6 +89,20 @@ async function mainMenu() {
         }
         case 'list_todos': {
             await listTodos(projectConfig);
+            break;
+        }
+
+        case 'github': {
+            await githubMenu();
+            break;
+        }
+
+        case 'gitlab': {
+            await gitlabMenu();
+            break;
+        }
+
+        case 'change_settings': {
             break;
         }
 
@@ -120,6 +121,10 @@ async function mainMenu() {
 }
 
 mainMenu();
+
+
+
+
 
 async function scanTodos(projectConfig: ProjectConfig) {
     const todos = await findTodos();
@@ -157,17 +162,11 @@ async function scanTodos(projectConfig: ProjectConfig) {
 }
 
 async function connectToGit() {
-    const git_option = await prompts({
-        type: 'select',
-        name: 'choice',
-        message: 'Select Options (use arrowkeys to change, enter to confirm)',
-        choices: [
-            { title: "Gitlab", value: 'gitlab' },
-            { title: "Github", value: 'github' }
-        ],
-        hint: '- Arrow keys to change. Return to submit',
-        instructions: false
-    });
+    const choices = [
+        { title: "Gitlab", value: 'gitlab' },
+        { title: "Github", value: 'github' }
+    ];
+    const git_option = await selectMenu(choices);
 
     refreshView();
 
@@ -177,6 +176,7 @@ async function connectToGit() {
             break;
         }
         case 'github': {
+            await connectToGithub();
             break;
         }
     }
@@ -228,3 +228,62 @@ function exitApp() {
     console.log(chalk.yellow('Goodbye!'));
     process.exit(0);
 }
+
+async function selectMenu(choices: Array<{ title: string, value: string }>, message: string = "Select Options (use arrowkeys to change, enter to confirm)") {
+    const option = await prompts({
+        type: 'select',
+        name: 'choice',
+        message: message,
+        choices,
+        hint: '- Arrow keys to change. Return to submit',
+        instructions: false
+    });
+
+    return option;
+}
+
+async function githubMenu() {
+    const choices = [
+        { title: 'Change provider', value: 'change_provider' },
+        { title: 'back', value: 'back' },
+    ];
+
+    const option = await selectMenu(choices);
+
+    await gitMenuParsing(option);
+}
+
+async function gitlabMenu() {
+    const choices = [
+
+        { title: 'Change provider', value: 'change_provider' },
+        { title: 'back', value: 'back' },
+    ];
+
+    const option = await selectMenu(choices);
+
+    await gitMenuParsing(option);
+}
+
+async function gitMenuParsing(option: prompts.Answers<"choice">) {
+    switch (option.choice) {
+        case 'change_provider': {
+            await changeProvider();
+            await connectToGit();
+            await clearTerminal();
+            break;
+        }
+        case 'back': {
+            await clearTerminal();
+            mainMenu();
+            return;
+        }
+    }
+}
+
+async function changeProvider() {
+    const vars = await SaveVars.getInstance();
+
+    vars.setGithubToken("");
+    vars.setGitlabToken("");
+} 
