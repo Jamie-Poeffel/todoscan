@@ -1,5 +1,5 @@
 import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { connectToGitlab } from '@/src/connectToGit';
+import { connectToGitlab } from '@/src/git';
 import prompts from 'prompts';
 import { SaveVars } from '@/src/saveVars';
 
@@ -62,7 +62,7 @@ describe('connectToGit', () => {
                 expect.objectContaining({
                     type: 'password',
                     name: 'value',
-                    message: 'Enter your Gitlab Access token:'
+                    message: 'Enter your GITLAB Access token:'
                 })
             );
             expect(instance.setGitlabToken).toHaveBeenCalledWith(mockToken);

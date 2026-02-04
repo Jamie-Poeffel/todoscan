@@ -6,7 +6,7 @@ import { findTodos } from './findTodos';
 import { SaveVars } from './saveVars';
 import { ProjectConfig } from './projectConfig';
 import { berryRed, TodoistApi } from '@doist/todoist-api-typescript';
-import { connectToGitlab } from './connectToGit';
+import { connectToGitlab } from './git';
 
 const asciiArt = `
  ________               __                 
