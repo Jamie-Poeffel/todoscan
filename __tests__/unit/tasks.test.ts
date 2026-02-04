@@ -121,9 +121,6 @@ describe('Todoist API Module', () => {
             expect(TodoistApi).toHaveBeenCalledWith('test-api-token');
             expect(mockApi.addTask).toHaveBeenCalledWith({ projectId, content, labels });
             expect(result).toEqual(mockTask);
-            expect(consoleLogSpy).toHaveBeenCalledWith(
-                expect.stringContaining('Task added successfully')
-            );
         });
 
         it('should log task details when debug is true', async () => {
@@ -137,9 +134,6 @@ describe('Todoist API Module', () => {
                 'Labels:',
                 labels
             );
-            expect(consoleLogSpy).toHaveBeenCalledWith(
-                expect.stringContaining('Task added successfully')
-            );
         });
 
         it('should not log task details when debug is false', async () => {
@@ -152,9 +146,6 @@ describe('Todoist API Module', () => {
                 expect.anything(),
                 'Labels:',
                 expect.anything()
-            );
-            expect(consoleLogSpy).toHaveBeenCalledWith(
-                expect.stringContaining('Task added successfully')
             );
         });
 

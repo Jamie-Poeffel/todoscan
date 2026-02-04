@@ -3,9 +3,6 @@ import { join } from 'path';
 import os from 'os';
 import prompts from 'prompts';
 import chalk from 'chalk';
-import { TodoistApi } from '@doist/todoist-api-typescript';
-import { api } from './tasks';
-import { title } from 'process';
 
 export class SaveVars {
     private readonly FILE_NAME = '.todoscan_secrets.json';
@@ -14,6 +11,10 @@ export class SaveVars {
     private static instance: SaveVars | null = null;
 
     public API_TOKEN_TASKIST: string = "";
+    public API_TOKEN_GITLAB: string = "";
+    public API_TOKEN_GITHUB: string = "";
+    public readonly API_URL_GITLAB: string = "";
+    public IS_GIT_INIT: boolean = (this.API_TOKEN_GITLAB == "" && this.API_TOKEN_GITHUB == "");
 
     private secrets: Record<string, string> = {};
 
@@ -21,6 +22,12 @@ export class SaveVars {
         this.LOCATION = join(os.homedir(), this.FILE_NAME);
         this.loadFile();
         this.API_TOKEN_TASKIST = this.secrets['api-token-taskist'] ?? "";
+        this.API_TOKEN_GITLAB = this.secrets['api-token-gitlab'] ?? "";
+        this.IS_GIT_INIT = Boolean(this.secrets['git-init']) ?? false;
+
+        if (!this.secrets['api-url-gitlab']) {
+            this.secrets['api-url-gitlab'] = "https://gitlab.com/api/v4";
+        }
     }
 
     public static async getInstance(): Promise<SaveVars> {
@@ -35,6 +42,24 @@ export class SaveVars {
             }
         }
         return this.instance;
+    }
+
+
+    private setIS_GIT_INIT(value: boolean) {
+        this.IS_GIT_INIT = value
+        this.secrets["git-init"] = String(value)
+    }
+
+    public setGitlabToken(value: string) {
+        this.setIS_GIT_INIT(true);
+        this.API_TOKEN_GITLAB = value
+        this.secrets["api-token-gitlab"] = value
+    }
+
+    public setGithubToken(value: string) {
+        this.setIS_GIT_INIT(true);
+        this.API_TOKEN_GITHUB = value
+        this.secrets["api-token-github"] = value
     }
 
     private loadFile() {
