@@ -1,11 +1,12 @@
 {
   "name": "todoscan",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Scan TODO comments in your code and push them to Todoist",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "repository": {
-    "url": "https://github.com/Jamie-Poeffel/todoscan"
+    "type": "git",
+    "url": "https://github.com/Jamie-Poeffel/todoscan.git"
   },
   "bin": {
     "todoscan": "./dist/index.js"
