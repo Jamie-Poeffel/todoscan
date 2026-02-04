@@ -1,36 +1,39 @@
 name: Bump version on merge
-
 on:
   push:
     branches:
       - main
-
 permissions:
   contents: write
-
 jobs:
   version:
     runs-on: ubuntu-latest
-
     steps:
+      - name: Generate token from GitHub App
+        uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
 
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-          
+
       - name: Configure Git
         run: |
-          git config --global user.email "action@github.com"
-          git config --global user.name "GitHub Action"
+          git config --global user.email "todoscan-release[bot]@users.noreply.github.com"
+          git config --global user.name "todoscan-release[bot]"
 
       - name: Determine version bump
         id: bump
         run: |
           MESSAGE="$(git log -1 --pretty=%B)"
-
           if echo "$MESSAGE" | grep -iq "major"; then
             echo "type=major" >> $GITHUB_OUTPUT
           elif echo "$MESSAGE" | grep -iq "minor"; then
