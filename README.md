@@ -3,6 +3,7 @@
 ![npm](https://img.shields.io/npm/v/todoscan)
 ![npm](https://img.shields.io/npm/l/todoscan)
 ![npm](https://img.shields.io/npm/d18m/todoscan)
+[![Test Package](https://github.com/Jamie-Poeffel/todoscan/actions/workflows/test.yml/badge.svg)](https://github.com/Jamie-Poeffel/todoscan/actions/workflows/test.yml)
 
 
 A simple CLI tool that scans your codebase for TODO-style comments and optionally adds them as tasks to **Todoist**.
