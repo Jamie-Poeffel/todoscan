@@ -137,6 +137,12 @@ mainMenu();
 async function scanTodos(projectConfig: ProjectConfig) {
     const todos = await findTodos();
 
+    if (!todos || todos.length === 0) {
+        console.log(chalk.red('×') + ' No todos found');
+        return;
+    }
+
+
     const choices = [
         { title: 'Select All', value: 'select_all' },
         ...todos.map((todo, index) => ({
